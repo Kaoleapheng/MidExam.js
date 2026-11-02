@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product Inventory System</title>
+<style>
+
+:root {
+  --ink: #132235;
+  --ink-soft: #5b6d82;
+  --line: #dfe7ef;
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --brand: #0f7a8a;
+  --brand-dark: #0b5563;
+  --brand-soft: #e8f4f6;
+  --low: #b26a00;
+  --low-soft: #fff6e5;
+  --low-line: #f0d9a8;
+  --danger: #b03a2e;
+  --danger-soft: #fdecea;
+  --ok: #1f7a4d;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(19, 34, 53, .05), 0 8px 24px -18px rgba(19, 34, 53, .35);
+}
+
+* {
+   box-sizing: border-box; 
+  }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app { max-width: 1240px; margin: 0 auto; padding: 26px 22px 60px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.muted { color: var(--ink-soft); font-size: 13px; }
+.right { text-align: right; }
+.link {
+  background: none; border: 0; padding: 0; color: var(--brand);
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: underline;
+}
+.link:hover { color: var(--brand-dark); }
+
+
+.topbar {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 18px; flex-wrap: wrap; margin-bottom: 20px;
+}
+.brand { display: flex; gap: 14px; align-items: flex-start; }
+.logo {
+  width: 44px; height: 44px; flex: 0 0 44px; border-radius: 12px;
+  background-image: url('picture/anime.jpeg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+.brand h1 { margin: 0; font-size: 22px; letter-spacing: -.3px; }
+.brand p { margin: 2px 0 0; color: var(--ink-soft); font-size: 13.5px; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.banner {
+  margin: 0 0 16px; padding: 10px 14px; font-size: 13px;
+  background: var(--low-soft); border: 1px solid var(--low-line);
+  border-radius: 10px; color: #7a5200;
+}
+
+
+.kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px;
+}
+.kpi {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px 18px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+}
+.kpi::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--brand-soft);
+}
+.kpi-label {
+  display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.kpi-value { display: block; font-size: 26px; line-height: 1.25; margin-top: 4px; letter-spacing: -.5px; }
+.kpi-foot { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.kpi.alert::before { background: var(--low); }
+.kpi.alert { background: var(--low-soft); border-color: var(--low-line); }
+.kpi.alert .kpi-value { color: var(--low); }
+
+/* ---------- tabs ---------- */
+.tabs {
+  display: flex; gap: 6px; border-bottom: 1px solid var(--line);
+  margin-bottom: 22px; flex-wrap: wrap;
+}
+.tab {
+  appearance: none; background: none; border: 0; cursor: pointer;
+  font: inherit; font-weight: 600; font-size: 14px; color: var(--ink-soft);
+  padding: 11px 16px; border-radius: 10px 10px 0 0; border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab:hover { color: var(--brand-dark); background:#1f7a4d; }
+.tab.is-active { color: var(--brand-dark); border-bottom-color: var(--brand); background: var(--card); }
+.tab.is-active:hover{
+  background-color:#5b6d82;
+  transition: scale(1.1);
+  transition: all 0.5s ease;
+}
+
+/* ---------- screens ---------- */
+.screen { display: none; }
+.screen.is-active { display: block; animation: fade .18s ease-out; }
+@keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+.split { display: grid; grid-template-columns: 1.35fr 1fr; gap: 18px; align-items: start; }
+.split.wide-main { grid-template-columns: 1.7fr 1fr; }
+@media (max-width: 980px) {
+  .split, .split.wide-main { grid-template-columns: 1fr; }
+  .kpis { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---------- cards ---------- */
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 18px 20px; box-shadow: var(--shadow);
+}
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 14px;
+}
+.card-head h2 { margin: 0; font-size: 16.5px; letter-spacing: -.2px; }
+
+/* ---------- toolbar ---------- */
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.toolbar .field.inline { margin: 0; flex: 1 1 220px; min-width: 180px; }
+.check {
+  display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px;
+  color: var(--ink); white-space: nowrap; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; background: #fbfdff;
+}
+.check input { accent-color: var(--brand); width: 15px; height: 15px; }
+
+/* ---------- form fields ---------- */
+.field { display: block; margin-bottom: 12px; }
+.field > span { display: block; font-size: 12.5px; font-weight: 600; color: #3d5266; margin-bottom: 5px; }
+.field input, .field select, input[type="search"], select {
+  width: 100%; padding: 9px 11px; font: inherit; font-size: 14px; color: var(--ink);
+  background: #fff; border: 1px solid #ccd8e4; border-radius: 9px; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field input:focus, .field select:focus, input[type="search"]:focus, select:focus {
+  border-color: var(--brand); box-shadow: 0 0 0 3px rgba(15, 122, 138, .14);
+}
+.field input.invalid, .field select.invalid {
+  border-color: var(--danger); background: var(--danger-soft);
+  box-shadow: 0 0 0 3px rgba(176, 58, 46, .1);
+}
+.field .err { display: block; color: var(--danger); font-size: 12px; margin-top: 4px; min-height: 0; }
+.field .err:empty { margin-top: 0; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hint { font-size: 12px; color: var(--ink-soft); margin: 4px 0 12px; }
+
+/* ---------- buttons ---------- */
+.btn {
+  appearance: none; font: inherit; font-weight: 600; font-size: 13.5px; cursor: pointer;
+  padding: 9px 15px; border-radius: 9px; border: 1px solid #ccd8e4;
+  background: #fff; color: var(--ink); transition: background .15s, border-color .15s, transform .05s;
+}
+.btn:hover { background: #f4f8fb; border-color: #b9c9d9; }
+.btn:active { transform: translateY(1px); }
+.btn.primary {
+  background: var(--brand); border-color: var(--brand); color: #fff;
+  box-shadow: 0 6px 14px -10px rgba(15, 122, 138, 1);
+}
+.btn.primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+.btn.ghost { background: #fff; }
+.btn.ghost.danger { color: var(--danger); border-color: #eccac6; }
+.btn.ghost.danger:hover { background: var(--danger-soft); }
+.btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn.danger-solid:hover { background: #93261c; }
+.btn.block { width: 100%; }
+.btn.tiny { padding: 5px 10px; font-size: 12.5px; border-radius: 7px; }
+
+/* ---------- tables ---------- */
+.table-wrap { overflow-x: auto; margin: 0 -4px; }
+table.data { width: 100%; border-collapse: collapse; font-size: 13.8px; min-width: 560px; }
+table.data th {
+  text-align: left; font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase;
+  color: #455c72; font-weight: 700; background: #eef4f8; padding: 10px 12px;
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+table.data th.num, table.data td.num { text-align: right; }
+table.data td { padding: 10px 12px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
+table.data tbody tr:hover td { background: #fafcfe; }
+table.data td.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12.8px; }
+table.data td.strong { font-weight: 700; }
+
+tr.is-low td { background: var(--low-soft); }
+tr.is-low:hover td { background: #fff2d8; }
+tr.is-low td:first-child { box-shadow: inset 3px 0 0 var(--low); }
+
+.badge {
+  display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .08em;
+  padding: 2px 7px; border-radius: 999px; vertical-align: 1px; margin-left: 8px;
+}
+.badge.low { background: var(--low); color: #fff; }
+.tag {
+  display: inline-block; font-size: 12px; padding: 2px 9px; border-radius: 999px;
+  background: var(--brand-soft); color: var(--brand-dark); border: 1px solid #c6e3e8;
+  white-space: nowrap;
+}
+.actions { white-space: nowrap; }
+.actions .btn + .btn { margin-left: 6px; }
+
+.empty {
+  margin: 16px 2px 2px; padding: 18px; text-align: center;
+  color: var(--ink-soft); font-size: 13.5px;
+  border: 1px dashed #cfdce8; border-radius: 10px; background: #fbfdff;
+}
+
+/* ---------- category bars ---------- */
+.bars { list-style: none; margin: 0; padding: 0; }
+.bars li { margin-bottom: 12px; }
+.bars .bar-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+.bars .bar-head strong { font-weight: 600; }
+.bars .track { height: 8px; background: #eef4f8; border-radius: 999px; overflow: hidden; }
+.bars .fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #0f7a8a, #46b3bf);
+}
+
+/* ---------- segmented control ---------- */
+.segmented { display: flex; gap: 8px; border: 0; padding: 0; margin: 0 0 12px; }
+.segmented .seg { flex: 1; cursor: pointer; }
+.segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented span {
+  display: block; text-align: center; padding: 9px 10px; font-size: 13.5px; font-weight: 600;
+  border: 1px solid #ccd8e4; border-radius: 9px; background: #fff; color: var(--ink-soft);
+  transition: all .15s;
+}
+.segmented input:checked + span {
+  background: var(--brand-soft); border-color: var(--brand); color: var(--brand-dark);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+.segmented input:focus-visible + span { box-shadow: 0 0 0 3px rgba(15, 122, 138, .2); }
+
+/* ---------- preview line ---------- */
+.preview {
+  margin: 2px 0 14px; padding: 11px 13px; font-size: 13px;
+  background: #f4f9fb; border: 1px solid #dbe9ef; border-radius: 10px; color: var(--ink-soft);
+}
+.preview strong { color: var(--ink); }
+.preview.bad { background: var(--danger-soft); border-color: #f1cdc8; color: #8e2d22; }
+
+/* ---------- footer ---------- */
+.foot {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--ink-soft);
+}
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px);
+  background: #13303a; color: #eaf7fa; font-size: 13.5px; font-weight: 600;
+  padding: 11px 18px; border-radius: 999px; box-shadow: 0 12px 30px -14px rgba(0, 0, 0, .8);
+  opacity: 0; transition: opacity .2s, transform .2s; z-index: 60; max-width: 90vw;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.bad { background: #7e251c; }
+
+/* ---------- modal ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(11, 26, 38, .48);
+  display: grid; place-items: center; padding: 20px; z-index: 70;
+}
+.modal-backdrop[hidden] { display: none; }
+.modal {
+  background: #fff; border-radius: 14px; padding: 22px 24px; width: min(430px, 100%);
+  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, .5);
+}
+.modal h3 { margin: 0 0 8px; font-size: 17px; }
+.modal p { margin: 0 0 20px; color: var(--ink-soft); font-size: 14px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 9px; }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+      </div>
+      <div>
+        <h1>Product Inventory System</h1>
+        <p>Track products, stock levels, stock value and replenishment.</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button type="button" class="btn ghost" id="exportCsv">Export CSV</button>
+      <button type="button" class="btn ghost danger" id="resetData">Reset demo data</button>
+    </div>
+  </header>
+
+  <p class="banner" id="storageBanner" hidden>
+    Storage is unavailable in this preview, so changes stay in memory only. Open the files in a normal browser tab to keep data after reload.
+  </p>
+
+  <!-- ============ KPI STRIP (always visible) ============ -->
+  <section class="kpis" aria-label="Inventory summary">
+    <div class="kpi">
+      <span class="kpi-label">Products</span>
+      <strong class="kpi-value" id="kpiCount">0</strong>
+      <span class="kpi-foot" id="kpiCountFoot">&nbsp;</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">Total stock value</span>
+      <strong class="kpi-value" id="kpiValue">$0.00</strong>
+      <span class="kpi-foot">Unit price &times; quantity</span>
+    </div>
+    <div class="kpi" id="kpiLowCard">
+      <span class="kpi-label">Low-stock products</span>
+      <strong class="kpi-value" id="kpiLow">0</strong>
+      <span class="kpi-foot">Quantity &le; threshold</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">Units in stock</span>
+      <strong class="kpi-value" id="kpiUnits">0</strong>
+      <span class="kpi-foot">All products combined</span>
+    </div>
+  </section>
+
+  <!-- ============ TABS ============ -->
+  <nav class="tabs" role="tablist">
+    <button type="button" class="tab is-active" data-screen="dashboard" role="tab">Dashboard</button>
+    <button type="button" class="tab" data-screen="products" role="tab">Products</button>
+    <button type="button" class="tab" data-screen="movement" role="tab">Stock movement</button>
+  </nav>
+
+  <main>
+
+    <!-- ============ SCREEN 1: DASHBOARD ============ -->
+    <section class="screen is-active" id="screen-dashboard">
+      <div class="split">
+        <div class="card">
+          <div class="card-head">
+            <h2>Needs replenishment</h2>
+            <span class="muted" id="lowSummary"></span>
+          </div>
+          <div class="table-wrap">
+            <table class="data" id="lowTable">
+              <thead>
+                <tr>
+                  <th>Product ID</th><th>Name</th><th>Category</th>
+                  <th class="num">Qty</th><th class="num">Threshold</th><th class="num">Stock value</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty" id="lowEmpty" hidden>Nothing is low on stock. Everything is above its threshold.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Stock value by category</h2></div>
+          <ul class="bars" id="categoryBars"></ul>
+          <p class="empty" id="barsEmpty" hidden>Add products to see the breakdown.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 2: PRODUCTS ============ -->
+    <section class="screen" id="screen-products">
+      <div class="split wide-main">
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Product list</h2>
+            <span class="muted" id="resultCount"></span>
+          </div>
+
+          <div class="toolbar">
+            <label class="field inline">
+              <span class="sr-only">Search products</span>
+              <input type="search" id="search" placeholder="Search by product ID or name…" autocomplete="off">
+            </label>
+            <label class="field inline">
+              <span class="sr-only">Filter by category</span>
+              <select id="categoryFilter"></select>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="lowOnly"> Low stock only
+            </label>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data" id="productTable">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Name</th><th>Category</th>
+                  <th class="num">Unit price</th><th class="num">Qty</th>
+                  <th class="num">Threshold</th><th class="num">Stock value</th><th class="right">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty" id="productEmpty" hidden></p>
+        </div>
+
+        <aside class="card form-card">
+          <div class="card-head">
+            <h2 id="formTitle">Add product</h2>
+            <button type="button" class="link" id="cancelEdit" hidden>Cancel</button>
+          </div>
+
+          <form id="productForm" novalidate>
+            <label class="field">
+              <span>Product ID *</span>
+              <input type="text" id="fId" placeholder="e.g. P-1007" autocomplete="off">
+              <small class="err" data-err="id"></small>
+            </label>
+
+            <label class="field">
+              <span>Name *</span>
+              <input type="text" id="fName" placeholder="e.g. A4 Notebook" autocomplete="off">
+              <small class="err" data-err="name"></small>
+            </label>
+
+            <label class="field">
+              <span>Category *</span>
+              <input type="text" id="fCategory" list="categoryList" placeholder="e.g. Stationery" autocomplete="off">
+              <datalist id="categoryList"></datalist>
+              <small class="err" data-err="category"></small>
+            </label>
+
+            <div class="row">
+              <label class="field">
+                <span>Unit price *</span>
+                <input type="text" id="fPrice" inputmode="decimal" placeholder="0.00">
+                <small class="err" data-err="unitPrice"></small>
+              </label>
+              <label class="field">
+                <span>Stock quantity *</span>
+                <input type="text" id="fQty" inputmode="numeric" placeholder="0">
+                <small class="err" data-err="quantity"></small>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Low-stock threshold *</span>
+              <input type="text" id="fThreshold" inputmode="numeric" placeholder="0">
+              <small class="err" data-err="threshold"></small>
+            </label>
+
+            <p class="hint">Unit price may be 0 or more. Quantity and threshold must be whole numbers of 0 or more.</p>
+            <button type="submit" class="btn primary block" id="saveProduct">Save product</button>
+          </form>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ============ SCREEN 3: STOCK MOVEMENT ============ -->
+    <section class="screen" id="screen-movement">
+      <div class="split">
+
+        <div class="card">
+          <div class="card-head"><h2>Stock adjustment</h2></div>
+
+          <form id="adjustForm" novalidate>
+            <label class="field">
+              <span>Product *</span>
+              <select id="adjustProduct"></select>
+              <small class="err" data-err="adjustProduct"></small>
+            </label>
+
+            <fieldset class="segmented">
+              <legend class="sr-only">Movement type</legend>
+              <label class="seg">
+                <input type="radio" name="direction" value="in" checked>
+                <span>Receive (+)</span>
+              </label>
+              <label class="seg">
+                <input type="radio" name="direction" value="out">
+                <span>Issue (&minus;)</span>
+              </label>
+            </fieldset>
+
+            <label class="field">
+              <span>Quantity *</span>
+              <input type="text" id="adjustAmount" inputmode="numeric" placeholder="e.g. 10" autocomplete="off">
+              <small class="err" data-err="amount"></small>
+            </label>
+
+            <p class="preview" id="adjustPreview">Select a product to begin.</p>
+
+            <button type="submit" class="btn primary block">Apply adjustment</button>
+            <p class="hint">Adjustments must be positive whole numbers. Issuing more than the available quantity is blocked.</p>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Movement history</h2>
+            <button type="button" class="link" id="clearHistory">Clear</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data" id="historyTable">
+              <thead>
+                <tr><th>When</th><th>Product</th><th>Type</th><th class="num">Qty</th><th class="num">Change</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty" id="historyEmpty" hidden>No stock movements yet.</p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <span>Product Inventory System &middot; midterm project</span>
+    <span class="muted">Stock value = unit price &times; quantity · Low stock when quantity &le; threshold</span>
+  </footer>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<!-- confirm dialog -->
+<div class="modal-backdrop" id="confirmBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" id="confirmCancel">Cancel</button>
+      <button type="button" class="btn danger-solid" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.Validate = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  const ok = (value) => ({ ok: true, value });
+  const fail = (error) => ({ ok: false, error });
+
+  /** Required text field (product ID, name, category). */
+  function text(value, label) {
+    const v = String(value == null ? '' : value).trim();
+    if (!v) return fail(label + ' is required.');
+    if (v.length > 60) return fail(label + ' must be 60 characters or fewer.');
+    return ok(v);
+  }
+
+  /** Money: 0 or greater, decimals allowed (max 2 places). Rejects "", "-1", "abc", "1.234". */
+  function money(value, label) {
+    const raw = String(value == null ? '' : value).trim();
+    if (raw === '') return fail(label + ' is required.');
+    if (!/^\d+(\.\d{1,2})?$/.test(raw)) {
+      return fail(label + ' must be a number of 0 or greater, with at most 2 decimals.');
+    }
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 0) return fail(label + ' must be 0 or greater.');
+    return ok(n);
+  }
+
+  /** Stock quantity / threshold: whole number, 0 or greater. Rejects "2.5", "-3", "abc", "". */
+  function wholeNumber(value, label) {
+    const raw = String(value == null ? '' : value).trim();
+    if (raw === '') return fail(label + ' is required.');
+    if (!/^\d+$/.test(raw)) return fail(label + ' must be a whole number of 0 or greater.');
+    const n = Number(raw);
+    if (!Number.isSafeInteger(n)) return fail(label + ' is too large.');
+    return ok(n);
+  }
+
+  /** Stock adjustment amount: whole number, strictly greater than 0. */
+  function positiveWholeNumber(value, label) {
+    const raw = String(value == null ? '' : value).trim();
+    if (raw === '') return fail(label + ' is required.');
+    if (!/^\d+$/.test(raw)) return fail(label + ' must be a whole number greater than 0.');
+    const n = Number(raw);
+    if (!Number.isSafeInteger(n)) return fail(label + ' is too large.');
+    if (n <= 0) return fail(label + ' must be greater than 0.');
+    return ok(n);
+  }
+
+  return { text, money, wholeNumber, positiveWholeNumber };
+});
+
+</script>
+<script>
+/* ============================================================
+   model.js — the business rules (no DOM)
+   A product: { id, name, category, unitPrice, quantity, threshold }
+
+   Rules from the brief:
+     Stock Value   = Unit Price x Quantity          (derived, never stored)
+     Total Value   = sum of all product stock values
+     Low stock     = Quantity <= Low-Stock Threshold
+     Adjustments   = positive whole numbers only, stock can never go negative
+   ============================================================ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else { root.Inventory = api.Inventory; root.Storage = api.Storage; }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+  const normId = (id) => String(id == null ? '' : id).trim().toLowerCase();
+
+  const Inventory = {
+    /** Stock value for ONE product = unit price x quantity (computed, never stored). */
+    stockValue(product) {
+      return round2(Number(product.unitPrice) * Number(product.quantity));
+    },
+
+    /** Low stock when quantity <= threshold. Numbers are cast first: "9" <= "10" is false for strings! */
+    isLowStock(product) {
+      return Number(product.quantity) <= Number(product.threshold);
+    },
+
+    /** Dashboard totals for a list of products. */
+    totals(products) {
+      const list = Array.isArray(products) ? products : [];
+      let totalValue = 0;
+      let totalUnits = 0;
+      let lowCount = 0;
+      list.forEach((p) => {
+        totalValue += Inventory.stockValue(p);
+        totalUnits += Number(p.quantity) || 0;
+        if (Inventory.isLowStock(p)) lowCount += 1;
+      });
+      return {
+        count: list.length,
+        totalUnits,
+        totalValue: round2(totalValue),
+        lowCount
+      };
+    },
+
+    /** Unique, alphabetically sorted category list (used by the filter + datalist). */
+    categories(products) {
+      const seen = new Map();
+      (products || []).forEach((p) => {
+        const c = String(p.category || '').trim();
+        if (c) seen.set(c.toLowerCase(), c);
+      });
+      return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
+    },
+
+    /** Case-insensitive lookup. */
+    findById(products, id) {
+      const key = normId(id);
+      return (products || []).find((p) => normId(p.id) === key) || null;
+    },
+
+    /** True when another product already uses this ID (ignoring `exceptId`). */
+    isDuplicateId(products, id, exceptId) {
+      const key = normId(id);
+      const skip = normId(exceptId);
+      return (products || []).some((p) => normId(p.id) === key && normId(p.id) !== skip);
+    },
+
+    /** Add a product. Mutates the array. Returns { ok, product } or { ok:false, field, error }. */
+    addProduct(products, data) {
+      if (Inventory.isDuplicateId(products, data.id)) {
+        return { ok: false, field: 'id', error: 'Product ID "' + String(data.id).trim() + '" already exists.' };
+      }
+      const product = {
+        id: String(data.id).trim(),
+        name: String(data.name).trim(),
+        category: String(data.category).trim(),
+        unitPrice: Number(data.unitPrice),
+        quantity: Number(data.quantity),
+        threshold: Number(data.threshold)
+      };
+      products.push(product);
+      return { ok: true, product };
+    },
+
+    /** Update an existing product (found by its ORIGINAL id). */
+    updateProduct(products, originalId, data) {
+      const existing = Inventory.findById(products, originalId);
+      if (!existing) return { ok: false, field: 'id', error: 'Product not found.' };
+      if (Inventory.isDuplicateId(products, data.id, originalId)) {
+        return { ok: false, field: 'id', error: 'Product ID "' + String(data.id).trim() + '" already exists.' };
+      }
+      existing.id = String(data.id).trim();
+      existing.name = String(data.name).trim();
+      existing.category = String(data.category).trim();
+      existing.unitPrice = Number(data.unitPrice);
+      existing.quantity = Number(data.quantity);
+      existing.threshold = Number(data.threshold);
+      return { ok: true, product: existing };
+    },
+
+    /** Delete by id. Returns { ok, product }. */
+    deleteProduct(products, id) {
+      const index = products.findIndex((p) => normId(p.id) === normId(id));
+      if (index === -1) return { ok: false, error: 'Product not found.' };
+      const [removed] = products.splice(index, 1);
+      return { ok: true, product: removed };
+    },
+
+    /**
+     * Receive (direction "in") or issue (direction "out") stock.
+     * `amount` must already be a validated positive whole number.
+     * Stock is never allowed to become negative.
+     */
+    adjustStock(products, id, direction, amount) {
+      const product = Inventory.findById(products, id);
+      if (!product) return { ok: false, error: 'Please select a product.' };
+      const qty = Number(amount);
+      if (!Number.isInteger(qty) || qty <= 0) {
+        return { ok: false, error: 'Adjustment must be a positive whole number.' };
+      }
+      const before = Number(product.quantity);
+      // Check the business rule BEFORE mutating anything.
+      if (direction === 'out' && qty > before) {
+        return { ok: false, error: 'Not enough stock: only ' + before + ' unit(s) available.' };
+      }
+      const after = direction === 'out' ? before - qty : before + qty;
+      if (after < 0) return { ok: false, error: 'Stock cannot become negative.' };
+      product.quantity = after;
+      return { ok: true, product, previousQuantity: before, newQuantity: after };
+    },
+
+    /** Search by ID or name + filter by category + optional "low stock only". */
+    filter(products, filters) {
+      const f = filters || {};
+      const q = String(f.q || '').trim().toLowerCase();
+      const category = f.category || 'ALL';
+      return (products || []).filter((p) => {
+        const matchesQuery =
+          !q ||
+          String(p.id).toLowerCase().includes(q) ||
+          String(p.name).toLowerCase().includes(q);
+        const matchesCategory = category === 'ALL' || String(p.category) === category;
+        const matchesLow = !f.lowOnly || Inventory.isLowStock(p);
+        return matchesQuery && matchesCategory && matchesLow;
+      });
+    }
+  };
+
+ 
+  const Storage = (function () {
+    const KEYS = { products: 'pis.products.v1', history: 'pis.history.v1' };
+    const memory = new Map();
+    let available = false;
+
+    try {
+      const ls = globalThis.localStorage;
+      if (ls) {
+        ls.setItem('__pis_probe__', '1');
+        ls.removeItem('__pis_probe__');
+        available = true;
+      }
+    } catch (err) {
+      available = false;
+    }
+
+    function read(key, fallback) {
+      if (!available) return memory.has(key) ? memory.get(key) : fallback;
+      try {
+        const raw = globalThis.localStorage.getItem(key);
+        if (raw === null) return fallback;
+        return JSON.parse(raw);
+      } catch (err) {
+        return fallback;
+      }
+    }
+
+    function write(key, value) {
+      if (!available) {
+        memory.set(key, value);
+        return false;
+      }
+      try {
+        globalThis.localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (err) {
+        available = false;
+        memory.set(key, value);
+        return false;
+      }
+    }
+
+    return { KEYS, read, write, isPersistent: () => available };
+  })();
+
+  return { Inventory, Storage };
+});
+
+</script>
+<script>
+/* ============================================================
+   app.js — UI: state, rendering and events
+   Depends on validate.js (Validate) and model.js (Inventory, Storage)
+   ============================================================ */
+(function () {
+  'use strict';
+
+  const Validate = window.Validate;
+  const Inventory = window.Inventory;
+  const Storage = window.Storage;
+
+  /* ---------------------------------------------------------
+     Demo data — includes a product exactly AT its threshold (P-1002)
+     and one at zero (P-1005) so the low-stock rule is visible.
+     --------------------------------------------------------- */
+  const SEED_PRODUCTS = [
+    { id: 'P-1001', name: 'A4 Notebook 200 pages', category: 'Stationery', unitPrice: 2.50, quantity: 40, threshold: 10 },
+    { id: 'P-1002', name: 'Gel Pen (Blue)',        category: 'Stationery', unitPrice: 0.75, quantity: 12, threshold: 12 },
+    { id: 'P-1003', name: 'USB-C Cable 1m',        category: 'Accessories', unitPrice: 6.90, quantity: 25, threshold: 6 },
+    { id: 'P-1004', name: 'Wireless Mouse',        category: 'Accessories', unitPrice: 12.50, quantity: 4, threshold: 5 },
+    { id: 'P-1005', name: 'A5 Sketchbook',         category: 'Stationery', unitPrice: 4.20, quantity: 0, threshold: 3 },
+    { id: 'P-1006', name: 'LED Desk Lamp',         category: 'Home Office', unitPrice: 18.00, quantity: 14, threshold: 4 }
+  ];
+
+  const state = {
+    products: [],
+    history: [],
+    filters: { q: '', category: 'ALL', lowOnly: false },
+    editingId: null,
+    screen: 'dashboard'
+  };
+
+  /* ---------------- tiny helpers ---------------- */
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.prototype.slice.call((root || document).querySelectorAll(sel));
+
+  const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  const esc = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ESCAPE_MAP[c]);
+
+  const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const money = (n) => usd.format(Number(n) || 0);
+
+  const formatWhen = (iso) => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString(undefined, {
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  };
+
+  /* ---------------- persistence ---------------- */
+  function persistProducts() { Storage.write(Storage.KEYS.products, state.products); }
+  function persistHistory() { Storage.write(Storage.KEYS.history, state.history); }
+
+  /* ---------------- toast ---------------- */
+  let toastTimer = null;
+  function toast(message, isError) {
+    const el = $('#toast');
+    el.textContent = message;
+    el.classList.toggle('bad', !!isError);
+    el.hidden = false;
+    // force reflow so the transition runs
+    void el.offsetWidth;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => { el.hidden = true; }, 220);
+    }, 2600);
+  }
+
+  /* ---------------- confirm dialog (promise based) ---------------- */
+  let confirmResolve = null;
+  function askConfirm(title, message, okLabel) {
+    $('#confirmTitle').textContent = title;
+    $('#confirmMessage').textContent = message;
+    $('#confirmOk').textContent = okLabel || 'Confirm';
+    $('#confirmBackdrop').hidden = false;
+    $('#confirmOk').focus();
+    return new Promise((resolve) => { confirmResolve = resolve; });
+  }
+  function closeConfirm(result) {
+    $('#confirmBackdrop').hidden = true;
+    if (confirmResolve) { confirmResolve(result); confirmResolve = null; }
+  }
+
+  /* =========================================================
+     RENDER
+     ========================================================= */
+  function renderAll() {
+    renderKpis();
+    renderProducts();
+    renderCategoryOptions();
+    renderAdjustSelect();
+    renderDashboard();
+    renderHistory();
+  }
+
+  function renderKpis() {
+    const t = Inventory.totals(state.products);
+    $('#kpiCount').textContent = t.count;
+    $('#kpiCountFoot').textContent = t.count === 1 ? '1 product tracked' : t.count + ' products tracked';
+    $('#kpiValue').textContent = money(t.totalValue);
+    $('#kpiLow').textContent = t.lowCount;
+    $('#kpiUnits').textContent = t.totalUnits.toLocaleString();
+    $('#kpiLowCard').classList.toggle('alert', t.lowCount > 0);
+  }
+
+  function renderProducts() {
+    const rows = Inventory.filter(state.products, state.filters);
+    const tbody = $('#productTable tbody');
+    const empty = $('#productEmpty');
+    const table = $('#productTable');
+
+    $('#resultCount').textContent =
+      rows.length + ' of ' + state.products.length + (state.products.length === 1 ? ' product' : ' products');
+
+    tbody.innerHTML = rows.map((p) => {
+      const low = Inventory.isLowStock(p);
+      const id = esc(p.id);
+      return (
+        '<tr class="' + (low ? 'is-low' : '') + '">' +
+          '<td class="mono">' + id + '</td>' +
+          '<td>' + esc(p.name) + (low ? '<span class="badge low">LOW</span>' : '') + '</td>' +
+          '<td><span class="tag">' + esc(p.category) + '</span></td>' +
+          '<td class="num">' + money(p.unitPrice) + '</td>' +
+          '<td class="num">' + Number(p.quantity).toLocaleString() + '</td>' +
+          '<td class="num">' + Number(p.threshold).toLocaleString() + '</td>' +
+          '<td class="num strong">' + money(Inventory.stockValue(p)) + '</td>' +
+          '<td class="right actions">' +
+            '<button type="button" class="btn tiny" data-action="edit" data-id="' + id + '">Edit</button>' +
+            '<button type="button" class="btn tiny ghost danger" data-action="delete" data-id="' + id + '">Delete</button>' +
+          '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    if (rows.length === 0) {
+      table.hidden = true;
+      empty.hidden = false;
+      empty.textContent = state.products.length === 0
+        ? 'No products yet. Use the form to add your first product.'
+        : 'No products match your search or filter. Try clearing them.';
+    } else {
+      table.hidden = false;
+      empty.hidden = true;
+    }
+  }
+
+  function renderCategoryOptions() {
+    const cats = Inventory.categories(state.products);
+
+    // filter dropdown
+    const select = $('#categoryFilter');
+    const current = state.filters.category;
+    select.innerHTML = '<option value="ALL">All categories</option>' +
+      cats.map((c) => '<option value="' + esc(c) + '">' + esc(c) + '</option>').join('');
+    if (current !== 'ALL' && cats.indexOf(current) === -1) state.filters.category = 'ALL';
+    select.value = state.filters.category;
+
+    // datalist for the product form
+    $('#categoryList').innerHTML = cats.map((c) => '<option value="' + esc(c) + '"></option>').join('');
+  }
+
+  function renderAdjustSelect() {
+    const select = $('#adjustProduct');
+    const previous = select.value;
+    if (state.products.length === 0) {
+      select.innerHTML = '<option value="">No products available</option>';
+      select.disabled = true;
+    } else {
+      select.disabled = false;
+      select.innerHTML = state.products.map((p) => {
+        const label = p.id + ' — ' + p.name + ' (qty ' + p.quantity + ')';
+        return '<option value="' + esc(p.id) + '">' + esc(label) + '</option>';
+      }).join('');
+      if (previous && Inventory.findById(state.products, previous)) select.value = previous;
+    }
+    updateAdjustPreview();
+  }
+
+  function renderDashboard() {
+    const low = state.products
+      .filter(Inventory.isLowStock)
+      .sort((a, b) => (a.quantity - a.threshold) - (b.quantity - b.threshold));
+
+    const tbody = $('#lowTable tbody');
+    tbody.innerHTML = low.map((p) =>
+      '<tr class="is-low">' +
+        '<td class="mono">' + esc(p.id) + '</td>' +
+        '<td>' + esc(p.name) + '</td>' +
+        '<td><span class="tag">' + esc(p.category) + '</span></td>' +
+        '<td class="num">' + p.quantity + '</td>' +
+        '<td class="num">' + p.threshold + '</td>' +
+        '<td class="num strong">' + money(Inventory.stockValue(p)) + '</td>' +
+      '</tr>'
+    ).join('');
+
+    $('#lowTable').hidden = low.length === 0;
+    $('#lowEmpty').hidden = low.length > 0;
+    $('#lowSummary').textContent = low.length === 0
+      ? 'All good'
+      : low.length + (low.length === 1 ? ' product needs' : ' products need') + ' restocking';
+
+    // category breakdown
+    const groups = new Map();
+    state.products.forEach((p) => {
+      const key = p.category || 'Uncategorised';
+      const entry = groups.get(key) || { value: 0, units: 0 };
+      entry.value += Inventory.stockValue(p);
+      entry.units += Number(p.quantity) || 0;
+      groups.set(key, entry);
+    });
+
+    const list = Array.from(groups.entries()).sort((a, b) => b[1].value - a[1].value);
+    const max = list.reduce((m, entry) => Math.max(m, entry[1].value), 0) || 1;
+
+    $('#categoryBars').innerHTML = list.map((entry) => {
+      const name = entry[0];
+      const data = entry[1];
+      const width = Math.max(2, Math.round((data.value / max) * 100));
+      return (
+        '<li>' +
+          '<div class="bar-head"><strong>' + esc(name) + '</strong>' +
+          '<span class="muted">' + money(data.value) + ' · ' + data.units + ' units</span></div>' +
+          '<div class="track"><div class="fill" style="width:' + width + '%"></div></div>' +
+        '</li>'
+      );
+    }).join('');
+    $('#barsEmpty').hidden = list.length > 0;
+  }
+
+  function renderHistory() {
+    const tbody = $('#historyTable tbody');
+    const rows = state.history.slice(0, 25);
+    tbody.innerHTML = rows.map((h) => {
+      const received = h.direction === 'in';
+      return (
+        '<tr>' +
+          '<td class="muted">' + esc(formatWhen(h.at)) + '</td>' +
+          '<td>' + esc(h.productId) + ' ' + esc(h.name) + '</td>' +
+          '<td>' + (received ? 'Received' : 'Issued') + '</td>' +
+          '<td class="num">' + (received ? '+' : '&minus;') + h.amount + '</td>' +
+          '<td class="num">' + h.from + ' &rarr; ' + h.to + '</td>' +
+        '</tr>'
+      );
+    }).join('');
+    $('#historyTable').hidden = rows.length === 0;
+    $('#historyEmpty').hidden = rows.length > 0;
+  }
+
+  /* =========================================================
+     PRODUCT FORM
+     ========================================================= */
+  function clearFieldErrors() {
+    $$('#productForm .err').forEach((el) => { el.textContent = ''; });
+    $$('#productForm input').forEach((el) => el.classList.remove('invalid'));
+  }
+
+  function setFieldError(field, message) {
+    const err = $('[data-err="' + field + '"]');
+    if (err) err.textContent = message;
+    const input = {
+      id: '#fId', name: '#fName', category: '#fCategory',
+      unitPrice: '#fPrice', quantity: '#fQty', threshold: '#fThreshold'
+    }[field];
+    if (input && $(input)) $(input).classList.add('invalid');
+  }
+
+  function resetProductForm() {
+    state.editingId = null;
+    $('#productForm').reset();
+    clearFieldErrors();
+    $('#formTitle').textContent = 'Add product';
+    $('#saveProduct').textContent = 'Save product';
+    $('#cancelEdit').hidden = true;
+  }
+
+  function startEdit(product) {
+    state.editingId = product.id;
+    clearFieldErrors();
+    $('#fId').value = product.id;
+    $('#fName').value = product.name;
+    $('#fCategory').value = product.category;
+    $('#fPrice').value = String(product.unitPrice);
+    $('#fQty').value = String(product.quantity);
+    $('#fThreshold').value = String(product.threshold);
+    $('#formTitle').textContent = 'Edit product';
+    $('#saveProduct').textContent = 'Update product';
+    $('#cancelEdit').hidden = false;
+    $('#fName').focus();
+  }
+
+  function onProductSubmit(event) {
+    event.preventDefault();
+    clearFieldErrors();
+
+    const raw = {
+      id: $('#fId').value,
+      name: $('#fName').value,
+      category: $('#fCategory').value,
+      unitPrice: $('#fPrice').value,
+      quantity: $('#fQty').value,
+      threshold: $('#fThreshold').value
+    };
+
+    // 1) validate every field, collect all messages at once
+    const checks = {
+      id: Validate.text(raw.id, 'Product ID'),
+      name: Validate.text(raw.name, 'Name'),
+      category: Validate.text(raw.category, 'Category'),
+      unitPrice: Validate.money(raw.unitPrice, 'Unit price'),
+      quantity: Validate.wholeNumber(raw.quantity, 'Stock quantity'),
+      threshold: Validate.wholeNumber(raw.threshold, 'Low-stock threshold')
+    };
+
+    let invalid = false;
+    Object.keys(checks).forEach((field) => {
+      if (!checks[field].ok) {
+        invalid = true;
+        setFieldError(field, checks[field].error);
+      }
+    });
+    if (invalid) {
+      toast('Please fix the highlighted fields.', true);
+      return;
+    }
+
+    // 2) hand the clean values to the model (business rules live there)
+    const data = {
+      id: checks.id.value,
+      name: checks.name.value,
+      category: checks.category.value,
+      unitPrice: checks.unitPrice.value,
+      quantity: checks.quantity.value,
+      threshold: checks.threshold.value
+    };
+
+    const editing = state.editingId !== null;
+    const result = editing
+      ? Inventory.updateProduct(state.products, state.editingId, data)
+      : Inventory.addProduct(state.products, data);
+
+    if (!result.ok) {
+      setFieldError(result.field || 'id', result.error);
+      toast(result.error, true);
+      return;
+    }
+
+    persistProducts();
+    resetProductForm();
+    renderAll();
+    toast(editing
+      ? 'Product "' + data.name + '" updated.'
+      : 'Product "' + data.name + '" added.');
+  }
+
+  /* =========================================================
+     DELETE
+     ========================================================= */
+  function onTableClick(event) {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+    const product = Inventory.findById(state.products, button.dataset.id);
+    if (!product) return;
+
+    if (button.dataset.action === 'edit') {
+      startEdit(product);
+      $('#fId').focus();
+      return;
+    }
+
+    if (button.dataset.action === 'delete') {
+      askConfirm(
+        'Delete product?',
+        'This will permanently remove ' + product.id + ' — ' + product.name + ' from the inventory.',
+        'Delete product'
+      ).then((confirmed) => {
+        if (!confirmed) return;
+        const removed = Inventory.deleteProduct(state.products, product.id);
+        if (!removed.ok) { toast(removed.error, true); return; }
+        if (state.editingId === product.id) resetProductForm();
+        persistProducts();
+        renderAll();
+        toast('Product "' + removed.product.name + '" deleted.');
+      });
+    }
+  }
+
+  /* =========================================================
+     STOCK ADJUSTMENT
+     ========================================================= */
+  function currentDirection() {
+    const checked = $('input[name="direction"]:checked');
+    return checked ? checked.value : 'in';
+  }
+
+  function updateAdjustPreview() {
+    const preview = $('#adjustPreview');
+    preview.classList.remove('bad');
+
+    const product = Inventory.findById(state.products, $('#adjustProduct').value);
+    if (!product) {
+      preview.textContent = 'Select a product to begin.';
+      return;
+    }
+
+    const raw = $('#adjustAmount').value.trim();
+    const direction = currentDirection();
+    const available = Number(product.quantity);
+
+    if (raw === '') {
+      preview.innerHTML = '<strong>' + esc(product.name) + '</strong> — in stock: ' + available +
+        ' · threshold: ' + product.threshold + '. Enter an amount to see the result.';
+      return;
+    }
+
+    const amount = Validate.positiveWholeNumber(raw, 'Quantity');
+    if (!amount.ok) {
+      preview.textContent = amount.error;
+      preview.classList.add('bad');
+      return;
+    }
+
+    const after = direction === 'out' ? available - amount.value : available + amount.value;
+    if (after < 0) {
+      preview.textContent = 'Not enough stock: only ' + available + ' unit(s) available.';
+      preview.classList.add('bad');
+      return;
+    }
+
+    const willBeLow = after <= Number(product.threshold);
+    preview.innerHTML =
+      '<strong>' + esc(product.name) + '</strong> — ' + available + ' ' +
+      (direction === 'out' ? '&minus;' : '+') + ' ' + amount.value + ' = <strong>' + after + '</strong> unit(s)' +
+      (willBeLow ? ' · <span style="color:#b26a00;font-weight:700">will be low stock</span>' : '');
+  }
+
+  function onAdjustSubmit(event) {
+    event.preventDefault();
+    $('[data-err="amount"]').textContent = '';
+    $('#adjustAmount').classList.remove('invalid');
+    $('[data-err="adjustProduct"]').textContent = '';
+
+    const id = $('#adjustProduct').value;
+    if (!id || !Inventory.findById(state.products, id)) {
+      $('[data-err="adjustProduct"]').textContent = 'Please select a product.';
+      return;
+    }
+
+    const amount = Validate.positiveWholeNumber($('#adjustAmount').value, 'Quantity');
+    if (!amount.ok) {
+      $('[data-err="amount"]').textContent = amount.error;
+      $('#adjustAmount').classList.add('invalid');
+      return;
+    }
+
+    const direction = currentDirection();
+    const result = Inventory.adjustStock(state.products, id, direction, amount.value);
+    if (!result.ok) {
+      $('[data-err="amount"]').textContent = result.error;
+      $('#adjustAmount').classList.add('invalid');
+      toast(result.error, true);
+      return;
+    }
+
+    state.history.unshift({
+      at: new Date().toISOString(),
+      productId: result.product.id,
+      name: result.product.name,
+      direction: direction,
+      amount: amount.value,
+      from: result.previousQuantity,
+      to: result.newQuantity
+    });
+    if (state.history.length > 100) state.history.length = 100;
+
+    persistProducts();
+    persistHistory();
+
+    $('#adjustAmount').value = '';
+    renderAll();
+    toast(
+      (direction === 'in' ? 'Received ' : 'Issued ') + amount.value +
+      ' unit(s) of "' + result.product.name + '" — now ' + result.newQuantity + '.'
+    );
+  }
+
+  /* =========================================================
+     TABS / CSV / RESET
+     ========================================================= */
+  function showScreen(name) {
+    state.screen = name;
+    $$('.tab').forEach((tab) => tab.classList.toggle('is-active', tab.dataset.screen === name));
+    $$('.screen').forEach((screen) => screen.classList.toggle('is-active', screen.id === 'screen-' + name));
+  }
+
+  function exportCsv() {
+    if (state.products.length === 0) { toast('There is nothing to export yet.', true); return; }
+    const header = ['Product ID', 'Name', 'Category', 'Unit Price', 'Quantity', 'Threshold', 'Stock Value'];
+    const lines = [header.join(',')];
+    state.products.forEach((p) => {
+      const cells = [
+        p.id, p.name, p.category,
+        Number(p.unitPrice).toFixed(2),
+        p.quantity, p.threshold,
+        Inventory.stockValue(p).toFixed(2)
+      ];
+      lines.push(cells.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(','));
+    });
+    const totals = Inventory.totals(state.products);
+    lines.push('');
+    lines.push('"Total stock value","' + totals.totalValue.toFixed(2) + '"');
+    lines.push('"Products","' + totals.count + '"');
+    lines.push('"Low stock products","' + totals.lowCount + '"');
+
+    try {
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'inventory-' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast('CSV exported.');
+    } catch (err) {
+      toast('Export is blocked in this environment.', true);
+    }
+  }
+
+  function resetDemoData() {
+    askConfirm(
+      'Reset demo data?',
+      'All products you added and the movement history will be replaced by the original sample products.',
+      'Reset data'
+    ).then((confirmed) => {
+      if (!confirmed) return;
+      state.products = SEED_PRODUCTS.map((p) => Object.assign({}, p));
+      state.history = [];
+      state.filters = { q: '', category: 'ALL', lowOnly: false };
+      $('#search').value = '';
+      $('#lowOnly').checked = false;
+      resetProductForm();
+      persistProducts();
+      persistHistory();
+      renderAll();
+      toast('Demo data restored.');
+    });
+  }
+
+  /* =========================================================
+     EVENTS
+     ========================================================= */
+  function bindEvents() {
+    // tabs
+    $$('.tab').forEach((tab) => {
+      tab.addEventListener('click', () => showScreen(tab.dataset.screen));
+    });
+
+    // product form
+    $('#productForm').addEventListener('submit', onProductSubmit);
+    $('#cancelEdit').addEventListener('click', resetProductForm);
+
+    // table actions
+    $('#productTable tbody').addEventListener('click', onTableClick);
+
+    // filters
+    $('#search').addEventListener('input', (event) => {
+      state.filters.q = event.target.value;
+      renderProducts();
+    });
+    $('#categoryFilter').addEventListener('change', (event) => {
+      state.filters.category = event.target.value;
+      renderProducts();
+    });
+    $('#lowOnly').addEventListener('change', (event) => {
+      state.filters.lowOnly = event.target.checked;
+      renderProducts();
+    });
+
+    // stock movement
+    $('#adjustForm').addEventListener('submit', onAdjustSubmit);
+    $('#adjustProduct').addEventListener('change', updateAdjustPreview);
+    $('#adjustAmount').addEventListener('input', updateAdjustPreview);
+    $$('input[name="direction"]').forEach((radio) => {
+      radio.addEventListener('change', updateAdjustPreview);
+    });
+    $('#clearHistory').addEventListener('click', () => {
+      if (state.history.length === 0) { toast('There is no history to clear.', true); return; }
+      askConfirm('Clear movement history?', 'The stock levels will not change — only the log is deleted.', 'Clear history')
+        .then((confirmed) => {
+          if (!confirmed) return;
+          state.history = [];
+          persistHistory();
+          renderHistory();
+          toast('Movement history cleared.');
+        });
+    });
+
+    // header actions
+    $('#exportCsv').addEventListener('click', exportCsv);
+    $('#resetData').addEventListener('click', resetDemoData);
+
+    // confirm dialog
+    $('#confirmOk').addEventListener('click', () => closeConfirm(true));
+    $('#confirmCancel').addEventListener('click', () => closeConfirm(false));
+    $('#confirmBackdrop').addEventListener('click', (event) => {
+      if (event.target === $('#confirmBackdrop')) closeConfirm(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !$('#confirmBackdrop').hidden) closeConfirm(false);
+    });
+  }
+
+  
+  function init() {
+    const savedProducts = Storage.read(Storage.KEYS.products, null);
+    const savedHistory = Storage.read(Storage.KEYS.history, null);
+
+    if (Array.isArray(savedProducts)) {
+      state.products = savedProducts;
+    } else {
+      state.products = SEED_PRODUCTS.map((p) => Object.assign({}, p));
+      persistProducts();
+    }
+    state.history = Array.isArray(savedHistory) ? savedHistory : [];
+
+    bindEvents();
+
+    if (!Storage.isPersistent()) $('#storageBanner').hidden = false;
+
+    renderAll();
+  }
+
+  // run when the DOM is ready (works with a plain <script> at the end of <body> too)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+</script>
+</body>
+</html>
